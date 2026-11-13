@@ -1,0 +1,83 @@
+x-laravel-app: &laravel-app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  working_dir: /var/www/html
+  env_file:
+    - .env
+  environment:
+    APP_ENV: local
+    APP_DEBUG: "true"
+    APP_URL: http://localhost:8000
+    DB_CONNECTION: pgsql
+    DB_HOST: db
+    DB_PORT: 5432
+    DB_DATABASE: ${DB_DATABASE:-learn_realtime}
+    DB_USERNAME: ${DB_USERNAME:-laravel}
+    DB_PASSWORD: ${DB_PASSWORD:-local_dev_password}
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+    REDIS_CLIENT: phpredis
+    REDIS_HOST: redis
+    REDIS_PASSWORD: null
+    REDIS_PORT: 6379
+    REDIS_QUEUE_RETRY_AFTER: 120
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+  init: true
+
+services:
+  app:
+    <<: *laravel-app
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *laravel-app
+    command:
+      - php
+      - artisan
+      - queue:work
+      - redis
+      - --sleep=3
+      - --tries=3
+      - --timeout=110
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-learn_realtime}
+      POSTGRES_USER: ${DB_USERNAME:-laravel}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-local_dev_password}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
