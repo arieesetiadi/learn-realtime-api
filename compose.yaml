@@ -8,7 +8,8 @@ x-laravel-app: &laravel-app
   environment:
     APP_ENV: local
     APP_DEBUG: "true"
-    APP_URL: http://localhost:8000
+    APP_URL: http://localhost:${APP_PORT:-8000}
+    SERVER_PORT: ${APP_PORT:-8000}
     DB_CONNECTION: pgsql
     DB_HOST: db
     DB_PORT: 5432
@@ -34,7 +35,7 @@ services:
   app:
     <<: *laravel-app
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:${APP_PORT:-8000}"
 
   worker:
     <<: *laravel-app
@@ -54,7 +55,7 @@ services:
       POSTGRES_USER: ${DB_USERNAME:-laravel}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-local_dev_password}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

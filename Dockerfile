@@ -40,4 +40,6 @@ USER www-data
 
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# The port is read from SERVER_PORT (Compose derives it from APP_PORT) and
+# falls back to Laravel's default of 8000.
+CMD ["php", "artisan", "serve", "--host=0.0.0.0"]
