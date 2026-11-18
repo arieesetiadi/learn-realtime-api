@@ -31,6 +31,9 @@ services:
   worker:
     <<: *live-source
 
+  reverb:
+    <<: *live-source
+
 volumes:
   vendor:
   bootstrap_cache:

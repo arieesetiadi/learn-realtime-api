@@ -23,6 +23,7 @@ x-laravel-app: &laravel-app
     REDIS_PASSWORD: null
     REDIS_PORT: 6379
     REDIS_QUEUE_RETRY_AFTER: 120
+    REVERB_HOST: reverb
   depends_on:
     db:
       condition: service_healthy
@@ -47,6 +48,17 @@ services:
       - --sleep=3
       - --tries=3
       - --timeout=110
+
+  reverb:
+    <<: *laravel-app
+    command:
+      - php
+      - artisan
+      - reverb:start
+      - --host=0.0.0.0
+      - --port=8080
+    ports:
+      - "${REVERB_PORT:-8080}:8080"
 
   db:
     image: postgres:17-alpine
