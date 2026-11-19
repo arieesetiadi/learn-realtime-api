@@ -7,6 +7,7 @@ namespace App\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModelStrictness();
         $this->configureSlowQueryLogging();
         $this->configureHttps();
+        $this->configureDevServerEnvironment();
     }
 
     /**
@@ -98,5 +100,27 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+    }
+
+    /**
+     * Pass the Reverb connection details through to the PHP dev server.
+     *
+     * `php artisan serve` only forwards a small allowlist of environment
+     * variables to its child process. Docker Compose provides the Reverb
+     * service hostname via the environment, but without this the child falls
+     * back to the `.env` value (localhost) and server-side broadcasts fail.
+     */
+    private function configureDevServerEnvironment(): void
+    {
+        if (! $this->app->isLocal()) {
+            return;
+        }
+
+        ServeCommand::$passthroughVariables = array_values(array_unique([
+            ...ServeCommand::$passthroughVariables,
+            'REVERB_HOST',
+            'REVERB_PORT',
+            'REVERB_SCHEME',
+        ]));
     }
 }
