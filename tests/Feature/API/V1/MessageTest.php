@@ -1,10 +1,12 @@
 <?php
 
+use App\Broadcasting\ConversationChannel;
 use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
 use Laravel\Sanctum\Sanctum;
 
@@ -129,6 +131,7 @@ test('broadcast channel authorization only allows participants', function () {
     $conversation = Conversation::factory()->between($user, $other)->create();
 
     config(['broadcasting.default' => 'reverb']);
+    Broadcast::connection()->channel('conversation.{conversationId}', ConversationChannel::class);
 
     Sanctum::actingAs($user);
 

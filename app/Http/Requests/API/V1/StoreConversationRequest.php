@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\API\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +20,7 @@ class StoreConversationRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, mixed>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
@@ -27,7 +29,7 @@ class StoreConversationRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:users,id',
-                Rule::notIn([$this->user()->id]),
+                Rule::notIn([$this->user()?->id]),
             ],
         ];
     }

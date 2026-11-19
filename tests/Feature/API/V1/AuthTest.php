@@ -9,7 +9,7 @@ test('user can register', function () {
     $response = $this->postJson('/api/v1/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
+        'password' => 'Password123!@#',
     ]);
 
     $response->assertCreated()
@@ -38,8 +38,16 @@ test('registration rejects duplicate email', function () {
     $this->postJson('/api/v1/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
-        'password' => 'password',
+        'password' => 'Password123!@#',
     ])->assertUnprocessable()->assertJsonValidationErrors('email');
+});
+
+test('registration rejects weak passwords', function () {
+    $this->postJson('/api/v1/register', [
+        'name' => 'Test User',
+        'email' => 'weak@example.com',
+        'password' => 'password',
+    ])->assertUnprocessable()->assertJsonValidationErrors('password');
 });
 
 test('user can login', function () {

@@ -21,6 +21,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Slow Query Threshold
+    |--------------------------------------------------------------------------
+    |
+    | Queries slower than this threshold (in milliseconds) are logged in the
+    | local environment to make performance regressions visible during
+    | development.
+    |
+    */
+
+    'slow_query_ms' => (int) env('DB_SLOW_QUERY_MS', 200),
+
+    /*
+    |--------------------------------------------------------------------------
     | Database Connections
     |--------------------------------------------------------------------------
     |
