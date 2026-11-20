@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\API\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class StoreConversationRequest extends FormRequest
 {
@@ -18,7 +18,21 @@ class StoreConversationRequest extends FormRequest
     }
 
     /**
+     * Normalize the recipient email before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $email = $this->input('recipient_email');
+
+        if (is_string($email)) {
+            $this->merge(['recipient_email' => Str::lower(trim($email))]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
+     *
+     * Exactly one of recipient_id or recipient_email is required.
      *
      * @return array<string, array<int, mixed>>
      */
@@ -26,10 +40,14 @@ class StoreConversationRequest extends FormRequest
     {
         return [
             'recipient_id' => [
-                'required',
+                'required_without:recipient_email',
+                'prohibits:recipient_email',
                 'integer',
-                'exists:users,id',
-                Rule::notIn([$this->user()?->id]),
+            ],
+            'recipient_email' => [
+                'required_without:recipient_id',
+                'prohibits:recipient_id',
+                'email',
             ],
         ];
     }

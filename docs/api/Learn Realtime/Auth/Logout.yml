@@ -1,0 +1,34 @@
+info:
+  name: Logout
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{api_url}}/{{api_v}}/logout"
+  auth:
+    type: bearer
+    token: "{{auth_token}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const logoutSucceeded = pm.response.code >= 200 && pm.response.code < 300;
+
+        pm.test("Logout response is successful (HTTP 2xx)", function () {
+            pm.expect(logoutSucceeded, `Expected HTTP 2xx, received ${pm.response.code}`).to.be.true;
+        });
+
+        if (logoutSucceeded) {
+            pm.environment.unset("auth_token");
+        } else {
+            console.warn(`Logout failed with HTTP ${pm.response.code}; preserving environment variable auth_token.`);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -38,22 +38,23 @@ class ConversationController extends Controller
      * POST /api/v1/conversations
      *
      * Find or create a conversation with the given recipient.
-     *
-     * Returns 201 when a new conversation is created and 200 when the
-     * conversation already existed.
      */
     public function store(StoreConversationRequest $request): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $conversation = $this->conversations->findOrCreateBetween(
+        $recipientId = $request->validated('recipient_id');
+        $recipientEmail = $request->validated('recipient_email');
+
+        $conversation = $this->conversations->findOrCreateWithRecipient(
             $user->id,
-            (int) $request->validated('recipient_id'),
+            $recipientId !== null ? (int) $recipientId : null,
+            is_string($recipientEmail) ? $recipientEmail : null,
         );
 
         return (new ConversationResource($conversation))
             ->response()
-            ->setStatusCode($conversation->wasRecentlyCreated ? 201 : 200);
+            ->setStatusCode(201);
     }
 }

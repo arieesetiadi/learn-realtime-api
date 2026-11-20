@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Conversation;
+use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Handles conversation use cases.
@@ -29,6 +31,43 @@ final class ConversationService
             ->with(['userOne', 'userTwo', 'latestMessage.sender'])
             ->latest('updated_at')
             ->cursorPaginate(20);
+    }
+
+    /**
+     * Find or create the direct conversation with the given recipient.
+     *
+     * The recipient is resolved by ID or email. An unknown recipient and a
+     * recipient equal to the actor both raise validation errors (422) rather
+     * than 404, so the endpoint does not reveal which accounts exist.
+     */
+    public function findOrCreateWithRecipient(
+        int $userId,
+        ?int $recipientId,
+        ?string $recipientEmail,
+    ): Conversation {
+        $field = $recipientId !== null ? 'recipient_id' : 'recipient_email';
+
+        $recipient = $recipientId !== null
+            ? User::query()->find($recipientId)
+            : User::query()->where('email', (string) $recipientEmail)->first();
+
+        if ($recipient === null) {
+            throw ValidationException::withMessages([
+                $field => [
+                    $recipientId !== null
+                        ? 'No user found with that ID.'
+                        : 'No user found with that email.',
+                ],
+            ]);
+        }
+
+        if ($recipient->id === $userId) {
+            throw ValidationException::withMessages([
+                $field => ['You cannot start a conversation with yourself.'],
+            ]);
+        }
+
+        return $this->findOrCreateBetween($userId, $recipient->id);
     }
 
     /**

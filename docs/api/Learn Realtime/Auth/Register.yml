@@ -1,0 +1,56 @@
+info:
+  name: Register
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{api_url}}/{{api_v}}/register"
+  body:
+    type: multipart-form
+    data:
+      - name: name
+        type: text
+        value: Arie 2
+      - name: email
+        type: text
+        value: arie2@example.com
+      - name: password
+        type: text
+        value: arie2
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let responseJson;
+
+        try {
+            responseJson = pm.response.json();
+        } catch (error) {
+            console.warn('Response is not valid JSON; auth_token was not updated.', error);
+            pm.test('Response is valid JSON', function () {
+                pm.expect.fail('Response is not valid JSON; auth_token was not updated.');
+            });
+        }
+
+        if (responseJson) {
+            const token = responseJson?.data?.token;
+
+            if (token) {
+                pm.environment.set('auth_token', token);
+            } else {
+                console.warn('Response JSON does not contain data.token; auth_token was not updated.');
+                pm.test('Response contains data.token', function () {
+                    pm.expect.fail('Response JSON does not contain data.token; auth_token was not updated.');
+                });
+            }
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

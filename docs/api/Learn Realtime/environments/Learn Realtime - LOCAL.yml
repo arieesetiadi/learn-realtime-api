@@ -1,0 +1,8 @@
+name: Learn Realtime - LOCAL
+variables:
+  - name: api_url
+    value: ""
+  - name: api_v
+    value: ""
+  - name: auth_token
+    value: ""

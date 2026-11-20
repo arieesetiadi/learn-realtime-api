@@ -1,0 +1,22 @@
+info:
+  name: Send Message
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{api_url}}/{{api_v}}/conversations/1/messages"
+  body:
+    type: multipart-form
+    data:
+      - name: body
+        type: text
+        value: Message 3
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

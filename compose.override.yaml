@@ -9,15 +9,27 @@
 # `vendor/` and `bootstrap/cache/` live inside the image (they are build
 # artifacts and .dockerignore'd on the host), so the bind mount would hide
 # them. Named volumes are seeded from the image on first creation, which keeps
-# both their contents and their www-data ownership. `storage/` is handled the
-# same way so logs, compiled views and sessions stay writable regardless of
-# host permissions.
+# their contents; their ownership is then aligned with the host uid (see below).
+# `storage/` is handled the same way so logs, compiled views and sessions stay
+# writable regardless of host permissions.
 #
 # After a rebuild that changes dependencies, refresh the seeded volumes with:
 #   docker compose down && docker compose up -d --build
 # (`docker compose up --build` alone keeps the old vendor/ volume contents.)
+#
+# The image runs as www-data (uid 33), but the bind-mounted working tree is owned
+# by the host user (uid 1000). Run the containers as the host uid instead so
+# commands like `php artisan make:controller` can write into app/, routes/ and
+# database/migrations/. The seeded named volumes must be owned by the same uid:
+#   docker compose exec -u root app chown -R 1000:1000 vendor bootstrap/cache storage
+# Re-run that chown after recreating the volumes (e.g. `down -v`).
 
 x-live-source: &live-source
+  user: "${UID:-1000}:${GID:-1000}"
+  # uid 1000 has no passwd entry in the image, so tools like tinker/psysh and
+  # composer look for a writable HOME. /tmp is always writable in the container.
+  environment:
+    HOME: /tmp
   volumes:
     - .:/var/www/html
     - vendor:/var/www/html/vendor

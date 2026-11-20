@@ -1,0 +1,24 @@
+info:
+  name: Create Conversation
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{api_url}}/{{api_v}}/conversations"
+  body:
+    type: multipart-form
+    data:
+      - name: recipient_id
+        type: text
+        value: "6"
+  auth:
+    type: bearer
+    token: "{{auth_token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
